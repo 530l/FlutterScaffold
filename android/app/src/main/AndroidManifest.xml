@@ -1,4 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 网络权限:Flutter 模板只在 debug/profile 清单中声明了 INTERNET,release 清单缺失,
+         不加会导致正式包完全无法联网,故必须在 main 清单中显式声明(合并后对所有构建类型生效) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 业务权限注释块:默认全部注释,用到哪项放开哪项(取消对应一行注释即可)。
+         与 lib/core/permission/permission_service.dart 中的 AppPermission 一一对应:
+         camera → CAMERA,photos → READ_MEDIA_IMAGES(Android 13+,旧版本需自行补 READ_EXTERNAL_STORAGE),
+         microphone → RECORD_AUDIO,locationWhenInUse → ACCESS_FINE/COARSE_LOCATION -->
+    <!-- <uses-permission android:name="android.permission.CAMERA"/> -->
+    <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> -->
+    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO"/> -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/> -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> -->
+
     <application
         android:label="flutterscaffold"
         android:name="${applicationName}"
