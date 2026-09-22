@@ -47,6 +47,7 @@ dependencies:
   tdesign_flutter: ^0.2.7
   flutter_smart_dialog: ^5.3.0
   cached_network_image_ce: ^4.12.0
+  riverpod_annotation: ^4.0.7
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +64,14 @@ dev_dependencies:
   json_serializable: ^6.14.1
   riverpod_generator: ^4.0.9
   retrofit_generator: ^10.2.11
+
+# 本地补丁:tdesign_flutter 0.2.7 继承了 IconData,而 Flutter 3.47 起
+# IconData 为 final class 无法被继承,导致编译失败;上游尚未发布修复版。
+# 此 fork 仅改写 lib/src/components/icon/td_icons.dart(常量改为裸 IconData),
+# 其余与 0.2.7 完全一致。上游修复后删除本段即可回到 pub 版本。
+dependency_overrides:
+  tdesign_flutter:
+    path: third_party/tdesign_flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
