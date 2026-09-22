@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.lyf.flutterscaffold"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android 要求 compileSdk 37(flutter.compileSdkVersion 为 36)
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

@@ -16,6 +16,7 @@ analyzer:
     - ios/**
     # 本地补丁 fork 的 tdesign_flutter(上游修复后移除)
     - third_party/**
+    - web/**
 
 linter:
   # The lint rules applied to this project can be customized in the
