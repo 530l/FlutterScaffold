@@ -10,7 +10,7 @@ import '../../core/utils/token_storage.dart';
 /// @RestApi()
 /// abstract class AuthApi {
 ///   @POST('/login')
-///   Future<ApiResponse<LoginEntity>> login(@Field() String username, @Field() String password);
+///   Future<LoginEntity> login(@Field() String username, @Field() String password);
 /// }
 /// ```
 class AuthRepository {

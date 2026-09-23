@@ -1,30 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../core/dialog/app_toast.dart';
-import '../../../core/network/app_exception.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/utils/result.dart';
 import '../auth_provider.dart';
 
 /// 登录页:本地假登录,验证 token 存取与登录后跳转
 ///
-/// 登录按钮的 loading 绑定 AuthNotifier 的异步态:
-/// build 恢复 token 与 login 请求期间均为 loading(禁用防重复提交)。
-class LoginScreen extends HookConsumerWidget {
+/// 登录按钮的 loading 绑定登录态信号的异步态:
+/// 启动恢复 token 与 login 请求期间均为 loading(禁用防重复提交)。
+class LoginScreen extends SignalStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // 用户名/密码输入控制器,卸载时自动释放
-    final usernameController = useTextEditingController();
-    final passwordController = useTextEditingController();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
-    // 登录异步态:isLoading = 恢复会话中 或 登录请求中
-    final auth = ref.watch(authProvider);
-    final loading = auth.isLoading;
+class _LoginScreenState extends State<LoginScreen> {
+  late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
+
+  @override
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 登录异步态:isLoading = 恢复会话中 或 登录请求中(读 .value 即自动订阅重建)
+    final loading = authState.value.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('登录')),
@@ -37,13 +53,13 @@ class LoginScreen extends HookConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TDInput(
-                controller: usernameController,
+                controller: _usernameController,
                 leftLabel: '用户名',
                 hintText: '请输入用户名',
               ),
               const SizedBox(height: 8),
               TDInput(
-                controller: passwordController,
+                controller: _passwordController,
                 leftLabel: '密码',
                 hintText: '请输入密码',
                 obscureText: true,
@@ -56,12 +72,7 @@ class LoginScreen extends HookConsumerWidget {
                 theme: TDButtonTheme.primary,
                 // 登录中禁用,防重复提交(TDButton 禁用后不响应 onTap)
                 disabled: loading,
-                onTap: () => _handleLogin(
-                  ref,
-                  context,
-                  usernameController,
-                  passwordController,
-                ),
+                onTap: _handleLogin,
               ),
             ],
           ),
@@ -70,25 +81,20 @@ class LoginScreen extends HookConsumerWidget {
     );
   }
 
-  /// 执行登录:成功 toast + 跳首页;失败 toast 错误文案
-  Future<void> _handleLogin(
-    WidgetRef ref,
-    BuildContext context,
-    TextEditingController usernameController,
-    TextEditingController passwordController,
-  ) async {
-    try {
-      await ref.read(authProvider.notifier).login(
-            usernameController.text,
-            passwordController.text,
-          );
-      if (!context.mounted) return;
-      // 登录成功:提示并跳转首页
-      AppToast.show('登录成功');
-      context.go(RoutePaths.home);
-    } on AppException catch (e) {
-      // 登录失败:展示面向用户的中文错误文案
-      AppToast.error(e.message);
+  /// 执行登录:穷举匹配 Result,不使用 try/catch
+  Future<void> _handleLogin() async {
+    final result = await login(
+      _usernameController.text,
+      _passwordController.text,
+    );
+    if (!mounted) return;
+
+    switch (result) {
+      case Success():
+        AppToast.show('登录成功');
+        context.go(RoutePaths.main);
+      case Failure(:final error):
+        AppToast.error(error.message);
     }
   }
 }

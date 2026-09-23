@@ -1,7 +1,7 @@
 // HomeRepository 单元测试:手写 MockHttpClientAdapter 打桩响应壳 JSON
 //
 // 链路:Dio(AppDioClient.create,含 EnvelopeInterceptor)→ mock 适配器返回
-// ApiResponse 壳 → 解包 → retrofit 解析模型 → resultGuard 包装 Result
+// 响应体 → 解包 → retrofit 解析模型 → apiCall 透出异常
 //
 // 说明:本文件依赖 build_runner 生成代码(home_api.g.dart / banner.g.dart),
 // 生成产物就绪后即可运行
@@ -11,7 +11,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterscaffold/core/network/app_dio_client.dart';
 import 'package:flutterscaffold/core/network/app_exception.dart';
-import 'package:flutterscaffold/core/utils/result.dart';
 import 'package:flutterscaffold/features/home/repository/home_repository.dart';
 
 /// 打桩适配器:忽略请求内容,固定返回构造好的响应体(HTTP 200)
@@ -63,23 +62,18 @@ void main() {
       ''';
       final repository = HomeRepository(buildDio(body));
 
-      final result = await repository.getBanners();
+      final banners = await repository.getBanners();
 
-      switch (result) {
-        case Success(:final value):
-          expect(value, hasLength(3));
-          expect(value.first.id, 1);
-          expect(value.first.title, '轮播一');
-          expect(value.first.imagePath, 'https://example.com/img1.png');
-          // 缺省字段走 @Default('') 兜底
-          expect(value.last.title, '');
-          expect(value.last.imagePath, '');
-        case Failure(:final error):
-          fail('应当解析成功,实际失败: $error');
-      }
+      expect(banners, hasLength(3));
+      expect(banners.first.id, 1);
+      expect(banners.first.title, '轮播一');
+      expect(banners.first.imagePath, 'https://example.com/img1.png');
+      // 缺省字段走 @Default('') 兜底
+      expect(banners.last.title, '');
+      expect(banners.last.imagePath, '');
     });
 
-    test('errorCode != 0 时返回 Failure(BizException)', () async {
+    test('errorCode != 0 时抛出 BizException', () async {
       const body = '''
       {
         "errorCode": -1,
@@ -89,16 +83,14 @@ void main() {
       ''';
       final repository = HomeRepository(buildDio(body));
 
-      final result = await repository.getBanners();
-
-      switch (result) {
-        case Success(:final value):
-          fail('应当失败,实际成功: $value');
-        case Failure(:final error):
-          expect(error, isA<BizException>());
-          expect((error as BizException).code, -1);
-          expect(error.message, '请求参数错误');
-      }
+      expect(
+        () => repository.getBanners(),
+        throwsA(
+          isA<BizException>()
+              .having((e) => e.code, 'code', -1)
+              .having((e) => e.message, 'message', '请求参数错误'),
+        ),
+      );
     });
   });
 }

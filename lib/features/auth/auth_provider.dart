@@ -1,75 +1,99 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:signals/signals.dart';
 
+import '../../core/network/app_exception.dart';
 import '../../core/utils/logger.dart';
 import '../../core/utils/result.dart';
 import '../../core/utils/token_storage.dart';
 import 'auth_repository.dart';
 
-part 'auth_provider.freezed.dart';
-part 'auth_provider.g.dart';
-
 /// 登录态数据:仅表达 未登录/已登录
 ///
-/// 「登录中」由外层 AsyncValue 的 loading 表达,不落在本状态里。
-@freezed
-abstract class AuthState with _$AuthState {
-  const factory AuthState({
-    /// 是否已登录
-    @Default(false) bool isLoggedIn,
+/// 「登录中」由外层异步态的 loading 表达,不落在本状态里。
+class AuthState {
+  const AuthState({
+    this.isLoggedIn = false,
+    this.token,
+  });
 
-    /// 登录成功后保存的 token
+  /// 是否已登录
+  final bool isLoggedIn;
+
+  /// 登录成功后保存的 token
+  final String? token;
+
+  AuthState copyWith({
+    bool? isLoggedIn,
     String? token,
-  }) = _AuthState;
+  }) =>
+      AuthState(
+        isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+        token: token ?? this.token,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AuthState &&
+          runtimeType == other.runtimeType &&
+          isLoggedIn == other.isLoggedIn &&
+          token == other.token;
+
+  @override
+  int get hashCode => Object.hash(isLoggedIn, token);
 }
 
-/// 全局登录态 Notifier
+/// 仓库实例(模块私有,不搞注入)
+final AuthRepository _authRepository = AuthRepository();
+
+/// 全局登录态信号(手动驱动)
 ///
-/// 状态为 `AsyncValue<AuthState>`:
-/// - AsyncLoading:build 恢复 token 中,或 login 请求进行中(登录中)
+/// 状态为 `AsyncState<AuthState>`:
+/// - AsyncLoading:启动恢复 token 中,或 login 请求进行中(登录中)
 /// - AsyncData:未登录 / 已登录
 /// - AsyncError:登录失败,error 为 AppException
-@Riverpod(keepAlive: true)
-class AuthNotifier extends _$AuthNotifier {
-  final AuthRepository _repository = AuthRepository();
+final authState = asyncSignal<AuthState>(
+  const AsyncLoading(),
+  // signals 7.x 中 debugLabel 参数已废弃,名称统一走 options.name
+  options: AsyncSignalOptions(name: 'authState'),
+);
 
-  /// 初始构建:从 TokenStorage 恢复登录态
-  ///
-  /// 恢复期间为 AsyncLoading;本地已有 token 则直接进入已登录态,
-  /// 否则返回未登录初始态。
-  @override
-  Future<AuthState> build() async {
-    final token = await TokenStorage.getToken();
-    if (token == null || token.isEmpty) {
-      return const AuthState();
-    }
-    return AuthState(isLoggedIn: true, token: token);
+/// 启动时恢复登录态:main 在 runApp 前调用
+///
+/// 本地已有 token 则直接进入已登录态,否则回到未登录初始态。
+Future<void> restoreAuth() async {
+  final token = await TokenStorage.getToken();
+  if (token == null || token.isEmpty) {
+    authState.setValue(const AuthState());
+    return;
+  }
+  authState.setValue(AuthState(isLoggedIn: true, token: token));
+}
+
+/// 登录:成功写入已登录态并原样返回 [Result.success];失败写入错误态并原样返回 [Result.failure]
+Future<Result<String>> login(String username, String password) async {
+  // 防重复提交:登录中直接忽略本次调用
+  if (authState.value.isLoading) {
+    return const Result.failure(BizException('正在处理中,请勿重复提交', code: -1));
   }
 
-  /// 登录:成功写入已登录态;失败写入 AsyncError 并重新抛出,由 UI 捕获提示
-  Future<void> login(String username, String password) async {
-    // 防重复提交:登录中直接忽略本次调用
-    if (state.isLoading) return;
+  authState.setLoading();
 
-    state = const AsyncLoading();
+  final result = await _authRepository.login(username, password);
 
-    final result = await _repository.login(username, password);
-
-    switch (result) {
-      case Success(:final value):
-        state = AsyncData(AuthState(isLoggedIn: true, token: value));
-      case Failure(:final error):
-        // 失败态保留错误对象,便于其他监听方(如路由守卫)感知
-        state = AsyncError(error, StackTrace.current);
-        Logger.w('登录失败: ${error.message}');
-        // 重新抛出,登录按钮回调处 catch 后 toast 提示
-        throw error;
-    }
+  switch (result) {
+    case Success(:final value):
+      authState.setValue(AuthState(isLoggedIn: true, token: value));
+      return result;
+    case Failure(:final error):
+      // 错误态保留错误对象,便于其他监听方(如路由守卫)感知
+      authState.setError(error);
+      Logger.w('登录失败: ${error.message}');
+      return result;
   }
+}
 
-  /// 登出:清除本地 token 并回到未登录态
-  Future<void> logout() async {
-    await TokenStorage.clearToken();
-    state = const AsyncData(AuthState());
-  }
+/// 登出:清除本地 token 并回到未登录态
+Future<void> logout() async {
+  await TokenStorage.clearToken();
+  authState.setValue(const AuthState());
 }

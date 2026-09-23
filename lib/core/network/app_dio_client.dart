@@ -126,16 +126,29 @@ class _EnvelopeInterceptor extends Interceptor {
   }
 }
 
-/// 仓库层统一异常防护:所有请求都经它包一层,UI 层不再 try/catch
+/// 执行网络请求并确保抛出的异常均收敛为 [AppException]
 ///
+/// 适用于 Query 查询类请求(供 futureSignal/AsyncSignal 自然消费):
 /// ```dart
-/// Future<Result<List<Banner>>> fetchBanners() =>
-///     resultGuard(() => api.getBanners());
+/// Future<List<Banner>> fetchBanners() =>
+///     apiCall(() => api.getBanners());
 /// ```
+Future<T> apiCall<T>(Future<T> Function() action) async {
+  try {
+    return await action();
+  } on DioException catch (e) {
+    Logger.w('apiCall 捕获网络异常: ${e.type.name} ${e.requestOptions.uri}');
+    throw AppExceptionMapper.fromDio(e);
+  }
+}
+
+/// 执行操作并返回 [Result<T>],UI 层可通过 switch/模式匹配穷举处理
 ///
-/// - 正常返回 → [Result.success]
-/// - DioException → 经 [AppExceptionMapper] 翻译后 → [Result.failure]
-/// - 其他异常(含已抛出的 AppException)→ [UnknownException] / 原样兜底
+/// 适用于 Action/Mutation 操作类请求(如提交表单、登录等):
+/// ```dart
+/// Future<Result<void>> submitForm() =>
+///     resultGuard(() => api.submit());
+/// ```
 Future<Result<T>> resultGuard<T>(Future<T> Function() action) async {
   try {
     return Result.success(await action());
