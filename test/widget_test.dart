@@ -152,6 +152,8 @@ void main() {
     await tester.tap(find.text('返回一个值'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    // 断言「回值」链路:pop 带出的值经 await push 接住,由 AppToast 展示出来
+    expect(find.text('详情页返回: 我是从详情页带回的值'), findsOneWidget);
     // 冲掉 AppToast(smart_dialog 默认展示 2s + 淡出动画),避免遗留 pending timer
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();

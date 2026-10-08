@@ -21,9 +21,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // 迁移前的 Riverpod provider 是 autoDispose:离开首页即销毁,重进必然重新请求。
-    // 信号是全局常驻的,重进不会自动重新求值,这里在已有数据/错误(非首次进入)时
-    // 主动 refresh 一次:保留旧数据的同时拉取最新,对齐「重进首页即刷新」的旧行为
+    // 信号是全局常驻的,重挂载页面不会自动重新求值,这里在已有数据/错误(非首次
+    // 进入)时主动 refresh 一次:保留旧数据的同时拉取最新。
+    // 注意:本页嵌在主壳 MainPage 的 IndexedStack 里,切 tab 不会卸载/重挂载,
+    // 因此「重进刷新」只在整壳重建时触发(登出 → 再登录 go('/') 这条路径),
+    // 登录会话内切回本 tab 不重新请求,只能靠下拉刷新。
+    // TODO 扩展点:产品上需要「切回 tab 即拉新」时,再引入基于可见性的刷新
     final bannerState = homeBanner.peek();
     if (bannerState is AsyncData || bannerState is AsyncError) {
       homeBanner.refresh();
