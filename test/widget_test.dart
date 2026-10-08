@@ -38,7 +38,7 @@ class _MutableHomeRepository extends HomeRepository {
 void main() {
   testWidgets('应用启动冒烟测试:渲染出 MaterialApp 与首页空态', (tester) async {
     // 顶层信号是全局单例,测试间会串扰:
-    // 先把仓库换成假实现,再 reset 让信号回到初始态,下次读取才用假仓库重新求值
+    // 先把仓库换成假实现,再 reset 回到初始态(reset 会立即用假仓库重新求值)
     final realRepository = homeRepository;
     homeRepository = _FakeHomeRepository();
     addTearDown(() => homeRepository = realRepository);
