@@ -6,7 +6,7 @@
 
 | 维度 | 方案 |
 |---|---|
-| 状态管理 | signals 7(顶层信号 `futureSignal` 查询 / `asyncSignal` + 顶层操作函数,`SignalWidget` 读 `.value` 自动订阅重建) |
+| 状态管理 | signals 7(顶层信号 `futureSignal` 查询 / `asyncSignal` + 顶层操作函数,`SignalWidget` 读 `.value` 自动订阅重建;入门见 [docs/signals.md](docs/signals.md)) |
 | 路由 | go_router(平铺路由表) |
 | 网络 | dio + retrofit(注解生成 API 客户端,统一拦截器解包 + 异常收敛) |
 | UI 基座 | tdesign_flutter(TDButton/TDInput 等基础组件直接使用,不二次封装) |
@@ -72,7 +72,7 @@ lib/
    - **Query 数据查询**:`xxx_repository.dart` 里直接用 `apiCall(() => api.fetch())` 返回 `Future<T>`,底层异常统一映射为 `AppException` 向上抛出;
    - **Action 用户操作**:`xxx_repository.dart` 里用 `resultGuard(() => api.submit())` 返回 `Result<T>`;
 3. **建状态**:`features/<模块>/provider/xxx_provider.dart`(文件名沿用,内容为顶层信号)——
-   - **Query 数据查询**:顶层 `final xxx = futureSignal(() => repository.fetch())`,`AsyncState` 自动管理 loading/error/data;下拉刷新用 `refresh()`(保留旧数据置 loading),错误重试用 `reload()`;
+   - **Query 数据查询**:顶层 `final xxx = futureSignal(() => repository.fetch())`,`AsyncState` 自动管理 loading/error/data;下拉刷新与错误重试统一用 `refresh()`(保留旧数据置 loading);
    - **Action 用户操作**:顶层 `asyncSignal` + 顶层操作函数驱动(`setLoading`/`setValue`/`setError`),函数返回 `Result<T>`,供 UI 穷举模式匹配;
    - 仓库由顶层可变变量持有(唯一的注入缝,widget 测试直接重新赋值为假实现);
 4. **建页面 + 注册路由**:`features/<模块>/view/xxx_screen.dart`(页面 `extends SignalWidget`,有状态用 `SignalStatefulWidget`,`build` 里读信号 `.value` 即自动订阅重建),然后在 `core/router/app_router.dart` 追加一行 GoRoute。
