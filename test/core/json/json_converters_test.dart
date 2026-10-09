@@ -1,6 +1,3 @@
-// JsonConverter 集合单元测试:解析与弱类型兜底断言
-//
-// 说明:被测文件为纯手写实现,不依赖任何生成产物
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterscaffold/core/json/json_converters.dart';
 

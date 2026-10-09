@@ -1,17 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 网络权限:Flutter 模板只在 debug/profile 清单中声明了 INTERNET,release 清单缺失,
-         不加会导致正式包完全无法联网,故必须在 main 清单中显式声明(合并后对所有构建类型生效) -->
     <uses-permission android:name="android.permission.INTERNET"/>
-
-    <!-- 业务权限注释块:默认全部注释,用到哪项放开哪项(取消对应一行注释即可)。
-         与 lib/core/permission/permission_service.dart 中的 AppPermission 一一对应:
-         camera → CAMERA,photos → READ_MEDIA_IMAGES(Android 13+,旧版本需自行补 READ_EXTERNAL_STORAGE),
-         microphone → RECORD_AUDIO,locationWhenInUse → ACCESS_FINE/COARSE_LOCATION -->
-    <!-- <uses-permission android:name="android.permission.CAMERA"/> -->
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> -->
-    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO"/> -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/> -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> -->
 
     <application
         android:label="flutterscaffold"
@@ -26,10 +14,6 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
@@ -39,17 +23,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
-
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

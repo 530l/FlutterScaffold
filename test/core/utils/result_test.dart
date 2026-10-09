@@ -1,6 +1,3 @@
-// Result 单元测试:构造、工厂重定向与 switch 模式匹配
-//
-// 说明:不依赖任何生成代码,生成前即可运行
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterscaffold/core/network/app_exception.dart';
 import 'package:flutterscaffold/core/utils/result.dart';
@@ -49,9 +46,9 @@ void main() {
       final text = switch (result) {
         Success(:final value) => '成功:$value',
         Failure(:final error) => switch (error) {
-            BizException(:final code) => '业务错误:$code',
-            _ => '其他错误:${error.message}',
-          },
+          BizException(:final code) => '业务错误:$code',
+          _ => '其他错误:${error.message}',
+        },
       };
       expect(text, '业务错误:10086');
     });
@@ -63,10 +60,7 @@ void main() {
       expect(const BizException('请求失败', code: -1).code, -1);
       expect(const UnauthorizedException('登录已过期').message, '登录已过期');
       expect(const CancelException('请求已取消').message, '请求已取消');
-      expect(
-        const UnknownException('出了点问题').debugDetail,
-        isNull,
-      );
+      expect(const UnknownException('出了点问题').debugDetail, isNull);
     });
   });
 }

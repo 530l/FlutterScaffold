@@ -1,21 +1,6 @@
-/// 通用 JsonConverter 集合:模型字段按需注解取用
-///
-/// 用法(标注在字段上,生成代码会自动插入转换调用):
-/// ```dart
-/// @JsonSerializable()
-/// class Model {
-///   @EpochSecondDateTimeConverter()
-///   final DateTime createdAt;
-///
-///   @DefaultStringConverter() // 后端可能回 null 的字符串字段
-///   final String nickname;
-/// }
-/// ```
-library;
-
 import 'package:json_annotation/json_annotation.dart';
 
-/// 秒级时间戳转换器:10 位 Unix 秒 ↔ [DateTime]
+/// 秒级时间戳转换。
 class EpochSecondDateTimeConverter extends JsonConverter<DateTime, int> {
   const EpochSecondDateTimeConverter();
 
@@ -27,7 +12,7 @@ class EpochSecondDateTimeConverter extends JsonConverter<DateTime, int> {
   int toJson(DateTime object) => object.millisecondsSinceEpoch ~/ 1000;
 }
 
-/// 毫秒级时间戳转换器:13 位 Unix 毫秒 ↔ [DateTime]
+/// 毫秒级时间戳转换。
 class EpochMilliDateTimeConverter extends JsonConverter<DateTime, int> {
   const EpochMilliDateTimeConverter();
 
@@ -38,7 +23,7 @@ class EpochMilliDateTimeConverter extends JsonConverter<DateTime, int> {
   int toJson(DateTime object) => object.millisecondsSinceEpoch;
 }
 
-/// ISO 8601 字符串转换器:'2024-01-15T10:30:00' ↔ [DateTime]
+/// ISO 8601 时间转换。
 class IsoDateTimeConverter extends JsonConverter<DateTime, String> {
   const IsoDateTimeConverter();
 
@@ -49,9 +34,7 @@ class IsoDateTimeConverter extends JsonConverter<DateTime, String> {
   String toJson(DateTime object) => object.toIso8601String();
 }
 
-/// 字符串默认值转换器:JSON 值为 null 时兜底为空串
-///
-/// 注:S 取 Object? 使 null 能流入本转换器(生成代码做 `as Object?` 转型不抛错)
+/// null 兜底为空字符串。
 class DefaultStringConverter extends JsonConverter<String, Object?> {
   const DefaultStringConverter();
 
@@ -62,7 +45,7 @@ class DefaultStringConverter extends JsonConverter<String, Object?> {
   Object? toJson(String object) => object;
 }
 
-/// 整型默认值转换器:JSON 值为 null 时兜底为 0
+/// 非整型值兜底为 0。
 class DefaultIntConverter extends JsonConverter<int, Object?> {
   const DefaultIntConverter();
 
@@ -73,9 +56,7 @@ class DefaultIntConverter extends JsonConverter<int, Object?> {
   Object? toJson(int object) => object;
 }
 
-/// 弱类型整型转换器:后端返回 String '123' / double 123.0 时也能解析为 int
-///
-/// 兜底顺序:int 直接用 → num 取整 → String 尝试解析 → 其余(含 null)归 0
+/// 兼容数字字符串和浮点数,无效值兜底为 0。
 class LenientIntConverter extends JsonConverter<int, Object?> {
   const LenientIntConverter();
 

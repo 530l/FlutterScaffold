@@ -16,11 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BannerModel {
 
-/// 轮播唯一标识
- int get id;/// 展示标题
- String get title;/// 点击跳转地址
- String get url;/// 轮播图片地址
- String get imagePath;
+ int get id; String get title; String get url; String get imagePath;
 /// Create a copy of BannerModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -225,13 +221,9 @@ class _BannerModel implements BannerModel {
   const _BannerModel({required this.id, this.title = '', this.url = '', this.imagePath = ''});
   factory _BannerModel.fromJson(Map<String, dynamic> json) => _$BannerModelFromJson(json);
 
-/// 轮播唯一标识
 @override final  int id;
-/// 展示标题
 @override@JsonKey() final  String title;
-/// 点击跳转地址
 @override@JsonKey() final  String url;
-/// 轮播图片地址
 @override@JsonKey() final  String imagePath;
 
 /// Create a copy of BannerModel
