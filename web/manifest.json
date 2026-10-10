@@ -1,11 +1,11 @@
 {
-    "name": "flutterscaffold",
-    "short_name": "flutterscaffold",
+    "name": "慢慢 · 好好生活",
+    "short_name": "慢慢",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F5F6F0",
+    "theme_color": "#426B57",
+    "description": "记录小习惯、专注时刻和生活手记。",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

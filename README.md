@@ -1,75 +1,75 @@
-# FlutterScaffold
+# 慢慢 · 好好生活
 
-Flutter 项目脚手架,提供网络、状态管理、路由、主题和通用交互组件。当前业务为示例。
+基于 Flutter、Riverpod 和 TDesign Flutter 的本地生活 APP，以暖白和鼠尾草绿为主色，支持夜间模式。
 
-## 技术栈
+## 功能
 
-| 模块 | 方案 |
+- **今日**：查看最近七天、打卡与补记、查看习惯完成进度。
+- **习惯**：搜索与分类筛选，添加、编辑、删除习惯，设定投入时长。
+- **手记**：选择心情、记录文字、回看与删除手记。
+- **专注**：选择 5–60 分钟，开始、暂停、继续，完成后保存记录。
+- **我的**：查看真实统计和最近七天的行动，设置夜间模式与默认专注时长，复制生活记录。
+
+首次使用提供三个可编辑的习惯，不预填打卡、专注或手记数据。所有记录通过
+`shared_preferences` 保存在当前设备，无需登录或后端。重开应用会恢复记录；
+读取失败时提示并阻止覆盖原始数据。
+
+专注计时以截止时间计算，回到前台后更新剩余时间；关闭应用后不恢复未完成的计时。
+
+## 组件
+
+| 场景 | TDesign 组件 |
 |---|---|
-| 状态管理 | Riverpod 3 + riverpod_annotation |
-| 路由 | go_router |
-| 网络 | dio + retrofit |
-| 模型 | freezed + json_serializable |
-| UI | TDesign Flutter |
-| 弹窗 | flutter_smart_dialog + 原生弹窗 |
-| 图片 | cached_network_image_ce |
-| 权限 | permission_handler |
-| 配置存储 | shared_preferences |
+| 导航与分类 | `TDBottomTabBar`、`TDTabBar`、`TDTab` |
+| 打卡与进度 | `TDCheckbox`、`TDProgress` |
+| 搜索与表单 | `TDSearchBar`、`TDInput`、`TDTextarea`、`TDSlider` |
+| 标签与提示 | `TDTag`、`TDAvatar`、`TDNoticeBar` |
+| 设置与反馈 | `TDCellGroup`、`TDCell`、`TDSwitch`、`TDAlertDialog`、`TDButton`、`TDEmpty` |
 
-## 常用命令
-
-```bash
-flutter run
-flutter run --dart-define=APP_ENV=prod
-dart run build_runner build
-```
-
-修改 Riverpod 注解、模型或接口后运行代码生成命令,生成文件不手动编辑。
-
-环境默认是 dev;dev/prod 均使用示例后端,上线前在 `AppConfig` 中配置实际地址。
+组件参数对照 [官方组件概览](https://tdesign.tencent.com/flutter/overview) 与项目本地版本。
+`third_party/tdesign_flutter` 保留了兼容 Flutter 3.47 的补丁。
 
 ## 目录与职责
 
 ```text
 lib/
-├── main.dart           # 环境初始化、会话恢复、根作用域
-├── app.dart            # 路由、主题和弹窗接入
+├── main.dart                   # 恢复本地记录、注入启动初值
+├── app.dart                    # 路由、主题与消息提示
 ├── core/
-│   ├── config/         # 环境配置
-│   ├── network/        # 客户端、响应解包和异常映射
-│   ├── router/         # 路由与名称
-│   ├── theme/          # 明暗主题
-│   ├── widget/         # 异步占位和图片
-│   ├── dialog/         # 弹窗、消息和加载提示
-│   ├── utils/          # Result、日志、token 存储和权限
-│   └── json/           # 字段转换器
-└── features/           # 页面、状态、仓库和模型
+│   ├── router/                 # 主页面与专注页路由
+│   ├── theme/                  # 明暗主题
+│   ├── dialog/                 # 弹窗、底部弹层、消息提示
+│   └── utils/                  # 日志
+└── features/
+    ├── main/view/              # 四个页面的导航主壳
+    └── wellness/
+        ├── model/              # 生活记录与心情定义
+        ├── provider/           # Riverpod 状态与本地存储
+        └── view/
+            ├── *_page.dart     # 页面状态、交互与区块排列
+            ├── habit_editor.dart
+            ├── focus_settings_sheet.dart
+            └── widgets/        # 按业务区块拆分的组件与公共样式
 ```
 
-- 页面订阅状态、处理交互和跳转,不访问存储或装配网络客户端。
-- provider 注入仓库并管理状态,仓库处理接口与存储。
-- `AppDioClient` 只装配客户端;`apiCall` 将网络和模型解析异常映射为 `AppException`。
-- `resultGuard` 位于 `core/utils/result.dart`,将操作异常转换为 `Result<T>`。
-- Dio 和路由由根作用域创建、释放,避免跨应用实例共享状态。
+页面的 `build` 按顺序组合独立 Widget。欢迎卡片、日期选择、手记卡片、心情选择、
+专注表盘、统计和设置均有各自的组件，避免在主页面中堆叠嵌套布局。
+公共组件负责卡片、标题、统计、时长选择、空状态和键盘避让。
 
-## 新模块接入
+四个页面通过 `IndexedStack` 保留状态，`TickerMode` 暂停隐藏页面的动画。
+搜索、筛选和表单草稿使用局部状态；习惯、手记、专注记录和设置由
+`wellnessProvider` 管理，保存成功后更新。Riverpod 的注解和命名规则见
+[docs/riverpod.md](docs/riverpod.md)。
 
-1. 定义模型和接口,通过构造函数向仓库注入客户端。
-2. 查询返回 `apiCall(() => api.fetch())`;网络操作返回 `resultGuard(() => apiCall(() => api.submit()))`。
-3. 用 `@Riverpod(keepAlive: true)` 函数注入仓库,查询用 `@riverpod` 异步函数,操作用注解类管理状态。
-4. 页面使用 `ConsumerWidget` 或 `ConsumerStatefulWidget`,通过 `ref.watch` 订阅、`ref.read` 调用操作。
+## 常用命令
 
-代码注释使用简洁中文,说明意图和边界。纯页面状态继续使用 `setState`。
-Riverpod 用法见 [docs/riverpod.md](docs/riverpod.md)。
+```bash
+flutter pub get
+flutter run
+dart run build_runner build
+```
 
-## 页面与公共组件
+修改 Riverpod 注解后运行代码生成命令，生成文件不手动编辑。
 
-主壳通过 `IndexedStack` 保留探索、创作、资产、我的四个 tab。切 tab 保留查询结果,主壳销毁后首页查询自动释放并取消请求。新增 tab 时保持页面与底部导航顺序一致。
-
-`AsyncView` 展示加载、空数据、错误和内容;下拉刷新保留旧内容。操作返回 `Result<T>`,由页面决定提示和跳转。
-
-TDesign 组件直接使用,公共组件只统一项目样式和交互。`third_party/tdesign_flutter` 是兼容 Flutter 3.47 的本地补丁,上游兼容后核对并移除覆盖。
-
-业务权限按实际功能添加到 Android 清单和 iOS 用途描述中,再调用 `Permissions` 检查或申请。
-
-当前登录为本地模拟,token 使用普通偏好存储,Android release 使用调试签名。这些示例配置需要在正式上线前替换。
+各平台应用名与图标统一为「慢慢」。图标源码位于 `tool/generate_brand_icons.py`，
+使用带 Pillow 的 Python 环境运行即可重新生成 Android、iOS 和 Web 图标。

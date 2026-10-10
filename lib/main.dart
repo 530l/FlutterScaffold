@@ -2,24 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
-import 'core/config/app_config.dart';
-import 'features/auth/auth_provider.dart';
-import 'features/auth/auth_repository.dart';
+import 'core/utils/logger.dart';
+import 'features/wellness/model/wellness_state.dart';
+import 'features/wellness/provider/wellness_provider.dart';
 
-/// 初始化环境和会话后启动应用。
+/// 恢复本地生活记录后启动应用。
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  AppConfig.init(appEnv: const String.fromEnvironment('APP_ENV'));
-
-  final authRepository = AuthRepository();
-  final initialAuthState = await restoreAuth(authRepository);
+  final wellnessRepository = WellnessRepository();
+  WellnessState initialWellnessState;
+  try {
+    initialWellnessState = await wellnessRepository.load();
+  } catch (error, stackTrace) {
+    Logger.e('生活记录恢复失败', error, stackTrace);
+    initialWellnessState = WellnessState.seed().copyWith(loadFailed: true);
+  }
 
   runApp(
     ProviderScope(
       overrides: [
-        authRepositoryProvider.overrideWithValue(authRepository),
-        initialAuthStateProvider.overrideWithValue(initialAuthState),
+        wellnessRepositoryProvider.overrideWithValue(wellnessRepository),
+        initialWellnessStateProvider.overrideWithValue(initialWellnessState),
       ],
       child: const App(),
     ),

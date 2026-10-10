@@ -4,8 +4,6 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 /// 无需 context 的全局消息提示。
 abstract final class AppToast {
-  static Future<void> show(String msg) => SmartDialog.showToast(msg);
-
   static Future<void> success(String msg) => SmartDialog.showToast(
     msg,
     builder: (_) => _IconToast(
